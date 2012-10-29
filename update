@@ -1,0 +1,16 @@
+#!/bin/sh -e
+
+if [ $# -eq 0 ]; then
+    scriptdir=$(cd $(dirname $0) && pwd)
+    for git_dir in $scriptdir/*/.git/; do
+        set -- "$@" "${git_dir%.git/}"
+    done
+fi
+
+for repo; do
+    echo "Updating $repo.."
+    cd "$repo"
+    git fetch origin
+    git merge --ff origin/master
+    cd - >/dev/null
+done

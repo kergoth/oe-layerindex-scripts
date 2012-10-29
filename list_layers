@@ -1,1 +1,4 @@
+#!/bin/sh -e
+
 find . -maxdepth 4 -wholename \*/conf/layer.conf |
+    sed 's,^\./,,; s,/conf/layer\.conf$,,' | sort

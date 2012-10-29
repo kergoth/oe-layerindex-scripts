@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if which git-cached-clone >/dev/null 2>&1; then
+    alias clone=git-cached-clone\ -N
+else
+    alias clone=git\ clone
+fi
+
+curl -s http://www.openembedded.org/wiki/LayerIndex | \
+    sed -n 's,.*<td>\([a-z]\+://[^<]\+\).*,\1,p' | \
+    sed 's,\.git$,,; s,$,.git,' | \
+    grep -v cgit | sort -u | \
+        while read url; do
+            dest="$(basename "$url" | sed 's,\.git$,,')"
+            if [ ! -e "$dest" ]; then
+                clone "$url" "$dest"
+            fi
+        done
