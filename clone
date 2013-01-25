@@ -6,13 +6,25 @@ else
     alias clone=git\ clone
 fi
 
+index_layers_list=$(mktemp clone.XXXXXX)
+current_layers_list=$(mktemp clone.XXXXXX)
+trap "rm -f $index_layers_list $current_layers_list" EXIT
+
 curl -s http://www.openembedded.org/wiki/LayerIndex | \
     sed -n 's,.*<td>\([a-z]\+://[^<]\+\).*,\1,p' | \
     sed 's,\.git$,,; s,$,.git,' | \
     grep -v cgit | sort -u | \
         while read url; do
             dest="$(basename "$url" | sed 's,\.git$,,')"
+            echo $dest >>$index_layers_list
             if [ ! -e "$dest" ]; then
                 clone "$url" "$dest"
             fi
         done
+git ls-files -o --directory | sed -n 's,/$,,p' >>$current_layers_list
+
+sort <$current_layers_list >$current_layers_list.new && mv $current_layers_list.new $current_layers_list
+sort <$index_layers_list >$index_layers_list.new && mv $index_layers_list.new $index_layers_list
+comm -2 -3 $current_layers_list $index_layers_list | while read layer; do
+    echo "Warning: $layer exists locally but not in LayerIndex"
+done
