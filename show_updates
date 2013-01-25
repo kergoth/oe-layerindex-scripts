@@ -8,11 +8,10 @@ if [ $# -eq 0 ]; then
 fi
 
 for repo; do
-    echo "Updating $repo.."
     cd "$repo"
-    git fetch
-    git merge --ff origin/master
+    if [ "$(git rev-list ORIG_HEAD..|wc -l)" -gt 0 ]; then
+        echo "$(basename "$repo"):"
+        git log ORIG_HEAD.. | git shortlog | sed 's,^,  ,'
+    fi
     cd - >/dev/null
 done
-
-$(dirname $0)/show_updates
