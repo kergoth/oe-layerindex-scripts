@@ -10,7 +10,7 @@ fi
 for repo; do
     echo "Updating $repo.."
     cd "$repo"
-    git fetch origin
+    git fetch
     git merge --ff origin/master
     cd - >/dev/null
 done
