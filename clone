@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# eldk isn't really a layer, as far as I can tell, but is an integration of
+# layers, not unlike poky, so it's largely redundant with the rest of the
+# cloned repositories.
+exclude=eldk
+
 if which git-cached-clone >/dev/null 2>&1; then
     alias clone=git-cached-clone\ -N
 else
@@ -16,6 +21,12 @@ curl -s http://www.openembedded.org/wiki/LayerIndex | \
     grep -v cgit | sort -u | \
         while read url; do
             dest="$(basename "$url" | sed 's,\.git$,,')"
+            if [ -n "$exclude" ]; then
+                if echo "$(basename $dest)" | grep -qw "$exclude"; then
+                    echo >&2 "Skipping excluded $dest"
+                    continue
+                fi
+            fi
             echo $dest >>$index_layers_list
             if [ ! -e "$dest" ]; then
                 clone "$url" "$dest"
