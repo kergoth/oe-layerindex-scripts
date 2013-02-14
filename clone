@@ -11,15 +11,16 @@ else
     alias clone=git\ clone
 fi
 
+get_layers () {
+    #curl -s http://www.openembedded.org/wiki/LayerIndex | sed -n 's/.*class="external free".*href="\([^"]*\)".*/\1/p'
+    curl -s http://www.openembedded.org/wiki/LayerIndex|sed -n 's#.*\(git://[^<"]*\).*#\1#p'
+}
+
 index_layers_list=$(mktemp clone.XXXXXX)
 current_layers_list=$(mktemp clone.XXXXXX)
 trap "rm -f $index_layers_list $current_layers_list" EXIT
 
-curl -s http://www.openembedded.org/wiki/LayerIndex | \
-    sed -n 's,.*<td>\([a-z]\+://[^<]\+\).*,\1,p' | \
-    sed 's,\.git$,,; s,$,.git,' | \
-    grep -v cgit | sort -u | \
-        while read url; do
+get_layers | while read url; do
             dest="$(basename "$url" | sed 's,\.git$,,')"
             if [ -n "$exclude" ]; then
                 if echo "$(basename $dest)" | grep -qw "$exclude"; then
