@@ -17,7 +17,7 @@ get_layerindex_urls () {
 }
 
 get_yocto_layers () {
-    curl -q http://git.yoctoproject.org/|sed -n "s#.*href='/cgit/cgit.cgi/\(meta-[^/]*\).*#\1#p" | grep -v '\-contrib' | sort -u
+    curl -s http://git.yoctoproject.org/|sed -n "s#.*href='/cgit/cgit.cgi/\(meta-[^/]*\).*#\1#p" | grep -v '\-contrib' | sort -u
 }
 
 index_layers_list=$(mktemp clone.XXXXXX)
