@@ -11,28 +11,46 @@ else
     alias clone=git\ clone
 fi
 
-get_layers () {
+get_layerindex_urls () {
     #curl -s http://www.openembedded.org/wiki/LayerIndex | sed -n 's/.*class="external free".*href="\([^"]*\)".*/\1/p'
     curl -s http://www.openembedded.org/wiki/LayerIndex|sed -n 's#.*\(git://[^<"]*\).*#\1#p'
+}
+
+get_yocto_layers () {
+    curl -q http://git.yoctoproject.org/|sed -n "s#.*href='/cgit/cgit.cgi/\(meta-[^/]*\).*#\1#p" | grep -v '\-contrib' | sort -u
 }
 
 index_layers_list=$(mktemp clone.XXXXXX)
 current_layers_list=$(mktemp clone.XXXXXX)
 trap "rm -f $index_layers_list $current_layers_list" EXIT
 
-get_layers | while read url; do
-            dest="$(basename "$url" | sed 's,\.git$,,')"
-            if [ -n "$exclude" ]; then
-                if echo "$(basename $dest)" | grep -qw "$exclude"; then
-                    echo >&2 "Skipping excluded $dest"
-                    continue
-                fi
-            fi
-            echo $dest >>$index_layers_list
-            if [ ! -e "$dest" ]; then
-                clone "$url" "$dest"
-            fi
-        done
+get_layerindex_urls | while read url; do
+    dest="$(basename "$url" | sed 's,\.git$,,')"
+    if [ -n "$exclude" ]; then
+        if echo "$exclude" | grep -qw "$(basename $dest)"; then
+            echo >&2 "Skipping excluded $dest"
+            continue
+        fi
+    fi
+    echo $dest >>$index_layers_list
+    if [ ! -e "$dest" ]; then
+        clone "$url" "$dest"
+    fi
+done
+
+get_yocto_layers | while read repo; do
+    dest="$(echo "$repo" | sed 's,\.git$,,')"
+    if [ -n "$exclude" ]; then
+        if echo "$exclude" | grep -qw "$dest"; then
+            echo >&2 "Skipping excluded $dest"
+            continue
+        fi
+    fi
+    if [ ! -e "$dest" ]; then
+        clone "git://git.yoctoproject.org/${repo}.git" "$dest"
+    fi
+done
+
 git ls-files -o --directory | sed -n 's,/$,,p' >>$current_layers_list
 
 sort <$current_layers_list >$current_layers_list.new && mv $current_layers_list.new $current_layers_list
