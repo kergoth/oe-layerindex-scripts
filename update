@@ -7,12 +7,17 @@ if [ $# -eq 0 ]; then
     done
 fi
 
+failed=""
 for repo; do
     echo "Updating $repo.."
     cd "$repo"
-    git fetch
-    git merge --ff origin/master
+    git fetch || failed="$failed $repo"
+    git merge --ff origin/master || failed="$failed $repo"
     cd - >/dev/null
 done
 
 $(dirname $0)/show_updates
+
+if [ -n "$failed" ]; then
+    echo >&2 "Warning: updates of these layers failed: $failed"
+fi
