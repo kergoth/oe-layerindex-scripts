@@ -14,6 +14,7 @@ fi
 get_layerindex_urls () {
     #curl -s http://www.openembedded.org/wiki/LayerIndex | sed -n 's/.*class="external free".*href="\([^"]*\)".*/\1/p'
     curl -s http://www.openembedded.org/wiki/LayerIndex|sed -n 's#.*\(git://[^<"]*\).*#\1#p'
+    curl -s http://layers.openembedded.org/layerindex/layers/|sed -n '/showRollie/{n; s/^ *//; p}'
 }
 
 get_yocto_layers () {
@@ -24,7 +25,7 @@ index_layers_list=$(mktemp clone.XXXXXX)
 current_layers_list=$(mktemp clone.XXXXXX)
 trap "rm -f $index_layers_list $current_layers_list" EXIT
 
-get_layerindex_urls | while read url; do
+get_layerindex_urls | sort -u | while read url; do
     dest="$(basename "$url" | sed 's,\.git$,,')"
     if [ -n "$exclude" ]; then
         if echo "$exclude" | grep -qw "$(basename $dest)"; then
