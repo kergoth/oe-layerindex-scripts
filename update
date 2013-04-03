@@ -1,5 +1,12 @@
 #!/bin/sh -e
 
+if [ $# -gt 0 ] && [ "$1" == "--rebase" ]; then
+    rebase=1
+    shift
+else
+    rebase=0
+fi
+
 if [ $# -eq 0 ]; then
     scriptdir=$(cd $(dirname $0) && pwd)
     for git_dir in $scriptdir/*/.git/; do
@@ -11,8 +18,12 @@ failed=""
 for repo; do
     echo "Updating $repo.."
     cd "$repo"
-    git fetch || failed="$failed $repo"
-    git merge --ff origin/master || failed="$failed $repo"
+    git checkout master || failed="$failed $repo"
+    if [ "$rebase" -eq 1 ]; then
+        git pull --rebase || failed="$failed $repo"
+    else
+        git pull --ff || failed="$failed $repo"
+    fi
     cd - >/dev/null
 done
 
