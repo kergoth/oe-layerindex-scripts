@@ -5,11 +5,7 @@
 # cloned repositories.
 exclude=eldk
 
-if which git-cached-clone >/dev/null 2>&1; then
-    alias clone=git-cached-clone\ -N
-else
-    alias clone=git\ clone
-fi
+alias clone=git\ clone
 
 get_layerindex_urls () {
     #curl -s http://www.openembedded.org/wiki/LayerIndex | sed -n 's/.*class="external free".*href="\([^"]*\)".*/\1/p'
