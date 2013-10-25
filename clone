@@ -1,50 +1,16 @@
 #!/bin/sh
 
-# eldk isn't really a layer, as far as I can tell, but is an integration of
-# layers, not unlike poky, so it's largely redundant with the rest of the
-# cloned repositories.
-exclude=eldk
-
 alias clone=git\ clone
-
-get_layerindex_urls () {
-    #curl -s http://www.openembedded.org/wiki/LayerIndex | sed -n 's/.*class="external free".*href="\([^"]*\)".*/\1/p'
-    curl -s http://www.openembedded.org/wiki/LayerIndex|sed -n 's#.*\(git://[^<"]*\).*#\1#p'
-    curl -s http://layers.openembedded.org/layerindex/layers/|sed -n '/showRollie/{n; s/^ *//; p}'
-}
-
-get_yocto_layers () {
-    curl -s http://git.yoctoproject.org/|sed -n "s#.*href='/cgit/cgit.cgi/\(meta-[^/]*\).*#\1#p" | grep -v '\-contrib' | sort -u
-}
 
 index_layers_list=$(mktemp clone.XXXXXX)
 current_layers_list=$(mktemp clone.XXXXXX)
 trap "rm -f $index_layers_list $current_layers_list" EXIT
 
-get_layerindex_urls | sort -u | while read url; do
-    dest="$(basename "$url" | sed 's,\.git$,,')"
-    if [ -n "$exclude" ]; then
-        if echo "$exclude" | grep -qw "$(basename $dest)"; then
-            echo >&2 "Skipping excluded $dest"
-            continue
-        fi
-    fi
+"$(dirname "$0")"/layer_urls | while read url; do
+    dest="$(basename "${url%.git}")"
     echo $dest >>$index_layers_list
     if [ ! -e "$dest" ]; then
         clone "$url" "$dest"
-    fi
-done
-
-get_yocto_layers | while read repo; do
-    dest="$(echo "$repo" | sed 's,\.git$,,')"
-    if [ -n "$exclude" ]; then
-        if echo "$exclude" | grep -qw "$dest"; then
-            echo >&2 "Skipping excluded $dest"
-            continue
-        fi
-    fi
-    if [ ! -e "$dest" ]; then
-        clone "git://git.yoctoproject.org/${repo}.git" "$dest"
     fi
 done
 

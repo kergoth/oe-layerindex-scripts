@@ -1,0 +1,46 @@
+#!/bin/sh
+
+
+# eldk is an integration of other layers, like poky
+# the meta-eca repository appears to have vanished
+excluded='eldk|meta-eca'
+
+
+canonical_url () {
+    # Give us the url in its canonical form
+    sed -e '
+s,^git://github.com,https://github.com,;
+s,^http://github.com,https://github.com,;
+s,^git://openembedded\.org,git://git.openembedded.org,;
+s,^http://git\.sv\.gnu\.org/,http://git.savannah.gnu.org/,;
+s,^git://git\.sv\.gnu\.org/,http://git.savannah.gnu.org/r/,;
+s,^git://git\.savannah\.gnu\.org/,http://git.savannah.gnu.org/r/,;
+s,\.sf\.net/,.sourceforge.net/,;
+s,^git://[^.]\+\.git\.sourceforge\.net/,git://gitscm.sourceforge.net/,;
+/git:\/\/gitscm.sourceforge.net\//q;
+s,\.git/*$,,;
+s,$,.git,;
+
+s,git://git.openembedded.org/openembedded-core.git,https://github.com/openembedded/oe-core.git,;
+s,git://git.openembedded.org/meta-openembedded.git,https://github.com/openembedded/meta-oe.git,;
+        '
+}
+
+list_urls () {
+    curl -s http://layers.openembedded.org/layerindex/branch/master/layers/ | sed -n '/showRollie/{n; s/^ *//; p}'
+    curl -s http://git.yoctoproject.org/|sed -n "s#.*href='/cgit/cgit.cgi/\(meta-[^/]*\).*#\1#p" | grep -v '\-contrib' | sed 's#^\(.*\)$#git://git.yoctoproject.org/\1.git#'
+
+    if [ -x ./extra_layer_urls ]; then
+        ./extra_layer_urls
+    fi
+}
+
+exclude_urls () {
+    if [ -n "$excluded" ]; then
+        grep -Ev "/($excluded)\.git\$"
+    else
+        cat
+    fi
+}
+
+list_urls | canonical_url | exclude_urls | sort -u
