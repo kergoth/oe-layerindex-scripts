@@ -14,10 +14,9 @@ trap "rm -f $index_layers_list $current_layers_list" EXIT
     fi
 done
 
-git ls-files -o --directory | sed -n 's,/$,,p' >>$current_layers_list
+git ls-files -o --directory | sed -n 's,/$,,p' | sort >>$current_layers_list
 
-sort <$current_layers_list >$current_layers_list.new && mv $current_layers_list.new $current_layers_list
 sort <$index_layers_list >$index_layers_list.new && mv $index_layers_list.new $index_layers_list
 comm -2 -3 $current_layers_list $index_layers_list | while read layer; do
-    echo "Warning: $layer exists locally but not in LayerIndex"
+    echo "Warning: $layer exists locally but not in our layer urls"
 done
