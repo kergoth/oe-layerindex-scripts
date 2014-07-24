@@ -1,9 +1,12 @@
 #!/bin/sh
 
 
-# eldk is an integration of other layers, like poky
-# the meta-eca repository appears to have vanished
-excluded='eldk|meta-eca'
+# repository gone MIA
+excluded="meta-eca"
+# integration of other layers from elsewhere only, ala poky
+excluded="$excluded|eldk"
+# bits on git.oe.org which aren't metadata-related
+excluded="$excluded|oetest|oebuildstats|eclipsetools|openembedded-web-frontpages|openembedded-admin"
 
 
 canonical_url () {
@@ -21,14 +24,15 @@ s,^git://[^.]\+\.git\.sourceforge\.net/,git://gitscm.sourceforge.net/,;
 s,\.git/*$,,;
 s,$,.git,;
 
-s,git://git.openembedded.org/openembedded-core.git,https://github.com/openembedded/oe-core.git,;
-s,git://git.openembedded.org/meta-openembedded.git,https://github.com/openembedded/meta-oe.git,;
+s,git://git.openembedded.org/openembedded-core.git,https://github.com/openembedded/openembedded-core.git,;
+s,git://git.openembedded.org/meta-openembedded.git,https://github.com/openembedded/meta-openembedded.git,;
         '
 }
 
 list_urls () {
     curl -s http://layers.openembedded.org/layerindex/branch/master/layers/ | sed -n '/showRollie/{n; s/^ *//; p}'
     curl -s http://git.yoctoproject.org/|sed -n "s#.*href='/cgit/cgit.cgi/\(meta-[^/]*\).*#\1#p" | grep -v '\-contrib' | sed 's#^\(.*\)$#git://git.yoctoproject.org/\1.git#'
+    curl -s 'http://git.openembedded.org/'|sed -n "s#.* class='toplevel-repo'><a title='[^']*' href='/\([^']*\)/'.*#git://git.openembedded.org/\1.git#p"
 
     if [ -x ./extra_layer_urls ]; then
         ./extra_layer_urls
